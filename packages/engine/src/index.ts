@@ -1,7 +1,7 @@
 /**
  * @apidiff/engine public API.
  *
- * Phase 8: compareSpecs() classifies structural facts with an explicit rule table.
+ * compareSpecs() is the product: parse → validate → normalize → facts → rules → report.
  */
 export { parseAndValidate, parseBothSpecs, detectFormat } from "./parse/parseAndValidate.js";
 export { normalizeSpec } from "./normalize/normalize.js";

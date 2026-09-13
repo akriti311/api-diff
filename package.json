@@ -3,8 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "pnpm --filter @apidiff/engine test",
-    "lint": "pnpm --filter @apidiff/engine lint"
+    "test": "pnpm --filter @apidiff/engine test && pnpm --filter @apidiff/api test",
+    "lint": "pnpm --filter @apidiff/engine lint && pnpm --filter @apidiff/api lint && pnpm --filter @apidiff/web lint",
+    "dev:api": "pnpm --filter @apidiff/api dev",
+    "dev:web": "pnpm --filter @apidiff/web dev"
   },
   "engines": {
     "node": ">=20"
