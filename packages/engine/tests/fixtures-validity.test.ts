@@ -6,16 +6,20 @@ import { parseAndValidate } from "../src/index.js";
 
 const testdataRoot = join(dirname(fileURLToPath(import.meta.url)), "../testdata");
 
-function listSpecFiles(dir: string): string[] {
+function listSpecFiles(dir: string, specNamesOnly = false): string[] {
   const files: string[] = [];
 
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const fullPath = join(dir, entry.name);
     if (entry.isDirectory()) {
-      files.push(...listSpecFiles(fullPath));
+      files.push(...listSpecFiles(fullPath, specNamesOnly));
       continue;
     }
-    if (/\.(yaml|yml|json)$/.test(entry.name)) {
+    if (specNamesOnly) {
+      if (/^(old|new)\.(yaml|yml|json)$/.test(entry.name)) {
+        files.push(fullPath);
+      }
+    } else if (/\.(yaml|yml|json)$/.test(entry.name) && entry.name !== "expected.json") {
       files.push(fullPath);
     }
   }
@@ -24,7 +28,7 @@ function listSpecFiles(dir: string): string[] {
 }
 
 describe("fixture validity", () => {
-  const validSpecs = listSpecFiles(join(testdataRoot, "fixtures"));
+  const validSpecs = listSpecFiles(join(testdataRoot, "fixtures"), true);
   const invalidSpecs = listSpecFiles(join(testdataRoot, "invalid"));
 
   it("has sample specs to check", () => {

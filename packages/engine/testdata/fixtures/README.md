@@ -18,6 +18,7 @@ Each folder is one before/after pair:
 | `enum-response-added` | response enum gained `refunded` |
 | `nested-property-removed` | `address.city` removed |
 | `response-property-added` | optional `nickname` added |
+| `request-property-required-added` | required request property `userId` added |
 | `composed-schema` | unchanged `allOf` (not fully analyzed) |
 | `renamed-path-param` | `/users/{id}` vs `/users/{userId}` — same path signature |
 | `added-method` | `POST` added on an existing `/users/{id}` |

@@ -1,0 +1,25 @@
+{
+  "summary": {
+    "total": 1,
+    "added": 1,
+    "removed": 0,
+    "modified": 0,
+    "breaking": 0,
+    "nonBreaking": 0,
+    "warnings": 1
+  },
+  "changes": [
+    {
+      "ruleId": "schema.enum.added.response",
+      "severity": "warning",
+      "action": "added",
+      "category": "schema",
+      "field": "enum",
+      "context": "response",
+      "method": "GET",
+      "path": "/orders/{id}",
+      "oldValue": null,
+      "newValue": "refunded"
+    }
+  ]
+}

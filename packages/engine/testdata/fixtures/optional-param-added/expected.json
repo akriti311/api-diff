@@ -1,0 +1,29 @@
+{
+  "summary": {
+    "total": 1,
+    "added": 1,
+    "removed": 0,
+    "modified": 0,
+    "breaking": 0,
+    "nonBreaking": 1,
+    "warnings": 0
+  },
+  "changes": [
+    {
+      "ruleId": "parameter.added.optional",
+      "severity": "non-breaking",
+      "action": "added",
+      "category": "parameter",
+      "field": "parameter",
+      "context": "request",
+      "method": "GET",
+      "path": "/items",
+      "oldValue": null,
+      "newValue": {
+        "name": "verbose",
+        "in": "query",
+        "required": false
+      }
+    }
+  ]
+}

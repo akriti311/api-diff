@@ -1,0 +1,27 @@
+{
+  "summary": {
+    "total": 1,
+    "added": 1,
+    "removed": 0,
+    "modified": 0,
+    "breaking": 1,
+    "nonBreaking": 0,
+    "warnings": 0
+  },
+  "changes": [
+    {
+      "ruleId": "requestBody.added.required",
+      "severity": "breaking",
+      "action": "added",
+      "category": "requestBody",
+      "field": "body",
+      "context": "request",
+      "method": "POST",
+      "path": "/items",
+      "oldValue": null,
+      "newValue": {
+        "required": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "summary": {
+    "total": 1,
+    "added": 1,
+    "removed": 0,
+    "modified": 0,
+    "breaking": 0,
+    "nonBreaking": 1,
+    "warnings": 0
+  },
+  "changes": [
+    {
+      "ruleId": "endpoint.added",
+      "severity": "non-breaking",
+      "action": "added",
+      "category": "endpoint",
+      "field": null,
+      "context": "operation",
+      "method": "GET",
+      "path": "/users",
+      "oldValue": null,
+      "newValue": "GET /users"
+    }
+  ]
+}

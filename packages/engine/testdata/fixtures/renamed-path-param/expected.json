@@ -1,0 +1,33 @@
+{
+  "summary": {
+    "total": 1,
+    "added": 0,
+    "removed": 0,
+    "modified": 1,
+    "breaking": 0,
+    "nonBreaking": 0,
+    "warnings": 1
+  },
+  "changes": [
+    {
+      "ruleId": "parameter.name.changed",
+      "severity": "warning",
+      "action": "modified",
+      "category": "parameter",
+      "field": "name",
+      "context": "request",
+      "method": "GET",
+      "path": "/users/{userId}",
+      "oldValue": {
+        "name": "id",
+        "in": "path",
+        "required": true
+      },
+      "newValue": {
+        "name": "userId",
+        "in": "path",
+        "required": true
+      }
+    }
+  ]
+}

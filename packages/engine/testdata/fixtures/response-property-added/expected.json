@@ -1,0 +1,25 @@
+{
+  "summary": {
+    "total": 1,
+    "added": 1,
+    "removed": 0,
+    "modified": 0,
+    "breaking": 0,
+    "nonBreaking": 1,
+    "warnings": 0
+  },
+  "changes": [
+    {
+      "ruleId": "schema.property.added.response",
+      "severity": "non-breaking",
+      "action": "added",
+      "category": "schema",
+      "field": "property",
+      "context": "response",
+      "method": "GET",
+      "path": "/users/{id}",
+      "oldValue": null,
+      "newValue": "nickname"
+    }
+  ]
+}

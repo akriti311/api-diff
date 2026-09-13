@@ -1,0 +1,33 @@
+{
+  "summary": {
+    "total": 1,
+    "added": 0,
+    "removed": 0,
+    "modified": 1,
+    "breaking": 1,
+    "nonBreaking": 0,
+    "warnings": 0
+  },
+  "changes": [
+    {
+      "ruleId": "parameter.required.increased",
+      "severity": "breaking",
+      "action": "modified",
+      "category": "parameter",
+      "field": "required",
+      "context": "request",
+      "method": "GET",
+      "path": "/items",
+      "oldValue": {
+        "name": "limit",
+        "in": "query",
+        "required": false
+      },
+      "newValue": {
+        "name": "limit",
+        "in": "query",
+        "required": true
+      }
+    }
+  ]
+}

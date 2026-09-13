@@ -1,0 +1,25 @@
+{
+  "summary": {
+    "total": 1,
+    "added": 1,
+    "removed": 0,
+    "modified": 0,
+    "breaking": 0,
+    "nonBreaking": 0,
+    "warnings": 1
+  },
+  "changes": [
+    {
+      "ruleId": "response.status.added.success",
+      "severity": "warning",
+      "action": "added",
+      "category": "response",
+      "field": "status",
+      "context": "response",
+      "method": "POST",
+      "path": "/items",
+      "oldValue": null,
+      "newValue": "201"
+    }
+  ]
+}

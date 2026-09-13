@@ -1,0 +1,25 @@
+{
+  "summary": {
+    "total": 1,
+    "added": 1,
+    "removed": 0,
+    "modified": 0,
+    "breaking": 0,
+    "nonBreaking": 1,
+    "warnings": 0
+  },
+  "changes": [
+    {
+      "ruleId": "method.added",
+      "severity": "non-breaking",
+      "action": "added",
+      "category": "method",
+      "field": null,
+      "context": "operation",
+      "method": "POST",
+      "path": "/users/{id}",
+      "oldValue": null,
+      "newValue": "POST /users/{id}"
+    }
+  ]
+}

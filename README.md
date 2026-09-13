@@ -8,9 +8,9 @@ It analyzes the **API contract only**. It does not read application source code.
 
 ## Current status
 
-**Phase 8 — compatibility rules.**
+**Phase 9 — comprehensive fixture tests.**
 
-`compareSpecs(old, new)` returns a classified report: breaking / non-breaking / warning, each with a `ruleId` and explanation.
+Every sample pair has `expected.json`. `compareSpecs` must match that report. Invalid specs stay rejected.
 
 ## Workspace
 

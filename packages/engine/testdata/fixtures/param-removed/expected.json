@@ -1,0 +1,29 @@
+{
+  "summary": {
+    "total": 1,
+    "added": 0,
+    "removed": 1,
+    "modified": 0,
+    "breaking": 0,
+    "nonBreaking": 0,
+    "warnings": 1
+  },
+  "changes": [
+    {
+      "ruleId": "parameter.removed",
+      "severity": "warning",
+      "action": "removed",
+      "category": "parameter",
+      "field": "parameter",
+      "context": "request",
+      "method": "GET",
+      "path": "/items",
+      "oldValue": {
+        "name": "verbose",
+        "in": "query",
+        "required": false
+      },
+      "newValue": null
+    }
+  ]
+}
