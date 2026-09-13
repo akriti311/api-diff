@@ -3,13 +3,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "pnpm --filter @apidiff/engine test && pnpm --filter @apidiff/api test",
-    "lint": "pnpm --filter @apidiff/engine lint && pnpm --filter @apidiff/api lint && pnpm --filter @apidiff/web lint",
+    "test": "pnpm --filter @apidiff/engine test && pnpm --filter @apidiff/api test && pnpm --filter @apidiff/cli test",
+    "lint": "pnpm --filter @apidiff/engine lint && pnpm --filter @apidiff/api lint && pnpm --filter @apidiff/web lint && pnpm --filter @apidiff/cli lint",
     "dev:api": "pnpm --filter @apidiff/api dev",
-    "dev:web": "pnpm --filter @apidiff/web dev"
+    "dev:web": "pnpm --filter @apidiff/web dev",
+    "compare": "tsx apps/cli/src/cli.ts"
   },
   "engines": {
     "node": ">=20"
   },
-  "packageManager": "pnpm@9.15.0"
+  "packageManager": "pnpm@9.15.0",
+  "devDependencies": {
+    "tsx": "^4.19.2"
+  }
 }

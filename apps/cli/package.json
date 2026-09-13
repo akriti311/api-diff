@@ -1,0 +1,22 @@
+{
+  "name": "@apidiff/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "apidiff": "./src/cli.ts"
+  },
+  "scripts": {
+    "start": "tsx src/cli.ts",
+    "test": "vitest run",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@apidiff/engine": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

@@ -2,18 +2,13 @@
 
 OpenAPI **3.0** contract compatibility analyzer.
 
-A developer changes a REST API. That change may be necessary. They may not realize it can break existing clients. API Diff compares the **old** and **new** OpenAPI specifications and reports:
+API Diff compares an **old** and a **new** OpenAPI specification and reports what changed, where it changed, and whether that change is **breaking**, **non-breaking**, or a **warning** — with the rule that produced the classification.
 
-- what changed
-- where
-- whether it is **breaking**, **non-breaking**, or a **warning**
-- why that classification was chosen
-
-It analyzes the **API contract only**. It does not read application source code, and it does not decide what the product should do.
+It analyzes the **API contract only**. It does not read application source code, and it does not decide whether a change should ship.
 
 This is a portfolio project: a small, explainable pipeline rather than a wrap of [oasdiff](https://github.com/oasdiff/oasdiff) or similar tools.
 
-## Quick start
+## Run locally
 
 Node 20+ and [pnpm](https://pnpm.io/) 9.
 
@@ -30,16 +25,50 @@ pnpm dev:web    # UI on http://localhost:5173  (proxies /api → :3001)
 
 Open the UI, click **Load example**, then **Compare**. The example removes `name` from `GET /users/{id}` and should report one **breaking** change: `schema.property.removed.response`.
 
+Or compare two spec files with the CLI (no server):
+
+```bash
+pnpm compare -- packages/engine/testdata/fixtures/removed-response-property/old.yaml packages/engine/testdata/fixtures/removed-response-property/new.yaml
+```
+
+Exit codes: `0` no breaking changes, `1` at least one breaking change, `2` usage error, missing file, or invalid spec.
+
+The HTTP API is `POST http://localhost:3001/api/compare`:
+
+```json
+{ "oldSpec": "... OpenAPI 3.0 YAML or JSON ...", "newSpec": "..." }
+```
+
+| Status | Body |
+|---|---|
+| 200 | Classified `report` |
+| 400 | `{ "error": "INVALID_SPEC", "target": "old" \| "new", "details": [...] }` |
+| 400 | `{ "error": "INVALID_REQUEST", "message": "..." }` |
+
+`GET /health` → `{ "ok": true, "service": "api-diff" }`. Body limit is 2 MB. The server is stateless: no database, no auth, no sessions.
+
+## Tests
+
 ```bash
 pnpm test
 pnpm lint
 ```
 
-`pnpm test` runs the engine golden tests and the Express API tests. `pnpm lint` typechecks engine, API, and web.
+`pnpm test` runs the engine golden tests, Express API tests, and CLI tests. `pnpm lint` typechecks engine, API, web, and CLI.
+
+Golden fixtures live in [`packages/engine/testdata/fixtures/`](packages/engine/testdata/fixtures/). Each folder is `old.yaml` / `new.yaml` (or JSON) plus `expected.json`. The hero case is [`removed-response-property`](packages/engine/testdata/fixtures/removed-response-property/).
+
+Engine tests also cover invalid YAML/JSON, OpenAPI 3.1, Swagger 2.0, and external `$ref` (all rejected). API tests hit `POST /api/compare` with supertest. CLI tests check exit codes against the same fixtures.
+
+To regenerate goldens after an intentional report-shape change:
+
+```bash
+pnpm --filter @apidiff/engine generate:expected
+```
 
 ## Pipeline
 
-Everything else is a consumer of one function:
+The UI, HTTP API, and CLI all call one function:
 
 ```ts
 compareSpecs(oldSpec: string, newSpec: string) →
@@ -57,10 +86,10 @@ New OpenAPI ──┴──► parse YAML/JSON
                    → report (summary + classified changes)
                               │
               ┌───────────────┼───────────────┐
-         Express API       React UI        CLI / CI (later)
+         Express API       React UI          CLI
 ```
 
-Facts do not carry severity. The walker records *what happened*. The rule catalog decides *whether it is safe for existing clients*. That split is the design you should be able to draw on a whiteboard.
+Facts do not carry severity. The walker records *what happened*. The rule catalog decides *whether it is safe for existing clients*.
 
 Request vs response is inverted on purpose:
 
@@ -69,58 +98,26 @@ Request vs response is inverted on purpose:
 | **Response** (server → client) | breaking — clients may still read it | usually non-breaking — extra fields are ignored |
 | **Request** (client → server) | warning — old clients may still send it | breaking — old clients will not send it |
 
-## Workspace
-
 ```text
 packages/engine    compareSpecs() + fixtures + golden tests
 apps/api           Express POST /api/compare
 apps/web           React UI
+apps/cli           apidiff <old-spec> <new-spec>
 ```
 
-## HTTP API
+## Breaking changes
 
-`POST http://localhost:3001/api/compare`
+A change is **breaking** when an existing client, written against the old contract, can fail against the new one. The MVP flags, among others:
 
-```json
-{ "oldSpec": "... OpenAPI 3.0 YAML or JSON ...", "newSpec": "..." }
-```
+- removed endpoints or HTTP methods
+- a new required parameter, or an optional parameter becoming required
+- a required JSON request body added, or an optional body becoming required
+- a success response status removed
+- a response JSON property removed, or a required request JSON property added
+- a schema `type` change
+- a request enum value removed
 
-| Status | Body |
-|---|---|
-| 200 | Classified `report` |
-| 400 | `{ "error": "INVALID_SPEC", "target": "old" \| "new", "details": [...] }` |
-| 400 | `{ "error": "INVALID_REQUEST", "message": "..." }` |
-
-`GET /health` → `{ "ok": true, "service": "api-diff" }`.
-
-Body limit is 2mb. The server is stateless: no database, no auth, no sessions.
-
-## What the MVP covers
-
-**In**
-
-- YAML and JSON
-- OpenAPI 3.0.x only
-- `get | post | put | patch | delete`
-- path, query, and header parameters (path params match by **position** when names differ)
-- `application/json` request bodies and responses
-- schemas: `type`, `properties`, `required`, `items`, `enum`, nested objects
-- internal `$ref` (`#/components/...`) with cycle-safe resolution
-- explicit rule table + structured report
-- fixture-driven golden tests (`expected.json`)
-
-**Out**
-
-- OpenAPI 3.1 and Swagger 2.0
-- external `$ref` / multi-file specs
-- cookie params, callbacks, webhooks, links, security schemes
-- deep `allOf` / `oneOf` / `anyOf` / discriminator (emits a warning)
-- non-JSON media types (noted, then ignored)
-- path-rename heuristics (`/users` vs `/people` is two operations, not a rename)
-- wrapping an existing diff library
-- CLI and a CI compatibility gate (optional later phases)
-
-## Compatibility rules
+**Warnings** need a human. Examples: removing a query parameter (servers often ignore extras, but clients may still send it) and adding enum values on a **response** (exhaustive client switches can break).
 
 First matching rule in [`packages/engine/src/rules/catalog.ts`](packages/engine/src/rules/catalog.ts) wins. Unmatched facts fall through to `unclassified` (warning).
 
@@ -163,33 +160,43 @@ First matching rule in [`packages/engine/src/rules/catalog.ts`](packages/engine/
 | `schema.ref.unresolved` | warning |
 | `unclassified` | warning |
 
-A **warning** is “needs a human.” Example: removing a query parameter is often ignored by servers, but it can still be a client bug. Enum values added on a **response** can break exhaustive client switches.
+## MVP scope
 
-## Tests
+**In**
 
-Golden fixtures live in [`packages/engine/testdata/fixtures/`](packages/engine/testdata/fixtures/). Each folder is `old.yaml` / `new.yaml` (or JSON) plus `expected.json`.
+- YAML and JSON
+- OpenAPI 3.0.x only
+- `get | post | put | patch | delete`
+- path, query, and header parameters (path params match by **position** when names differ)
+- `application/json` request bodies and responses
+- schemas: `type`, `properties`, `required`, `items`, `enum`, nested objects
+- internal `$ref` (`#/components/...`) with cycle-safe resolution
+- explicit rule table + structured report
+- fixture-driven golden tests (`expected.json`)
+- Express `POST /api/compare`, a React UI, and a CLI
 
-The hero case is [`removed-response-property`](packages/engine/testdata/fixtures/removed-response-property/).
+**Out**
 
-Engine tests also cover invalid YAML/JSON, OpenAPI 3.1, Swagger 2.0, and external `$ref`. API tests hit `POST /api/compare` with supertest.
+- OpenAPI 3.1 and Swagger 2.0
+- external `$ref` / multi-file specs
+- cookie params, callbacks, webhooks, links, security schemes
+- deep `allOf` / `oneOf` / `anyOf` / discriminator (emits a warning)
+- non-JSON media types (noted, then ignored)
+- path-rename heuristics (`/users` vs `/people` is two operations, not a rename)
+- wrapping an existing diff library
+- a CI compatibility gate
 
-To regenerate goldens after an intentional report-shape change:
-
-```bash
-pnpm --filter @apidiff/engine generate:expected
-```
-
-## Interview talking points
+## Design notes
 
 - **Do not compare raw YAML.** Formatting, key order, and `$ref` vs inlined schemas are not contract changes. Normalize first.
 - **Path signatures.** `/users/{id}` and `/users/{userId}` are the same operation (`GET /users/{}`). Path parameters then match by position.
 - **Maps and Sets.** Operations are keyed by `METHOD + pathSignature`. Diff is set difference plus field comparison, not nested loops over arrays.
 - **`$ref` cycles.** Resolution uses a visited set so `Node.neighbor → Node` cannot recurse forever.
-- **Facts vs rules.** Comparison emits `ChangeFact`. Classification is a table. You can change severity without rewriting the walker.
-- **Request/response inversion.** That table above is the core idea.
+- **Facts vs rules.** Comparison emits `ChangeFact`. Classification is a table. Severity can change without rewriting the walker.
+- **Request/response inversion.** The table above is the core idea.
 - **Fail closed.** Invalid specs never produce a partial report. Errors name `old` or `new`.
-- **Stateless engine.** Express is an adapter. The same function can later power a CLI (`exit 1` on breaking) without a database.
+- **Stateless engine.** Express and the CLI are adapters. The same `compareSpecs` function powers the UI.
 
 ## License
 
-Private portfolio work unless you add a license later.
+MIT. See [LICENSE](LICENSE).
