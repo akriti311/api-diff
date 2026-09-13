@@ -7,7 +7,8 @@ export type DiffSpecsResult =
   | { ok: false; error: ValidationError };
 
 /**
- * Parse, validate, normalize, then compare operations and parameters.
+ * Parse, validate, normalize, then compare operations, parameters,
+ * request bodies, and response status codes.
  * Does not classify breaking vs non-breaking yet.
  */
 export function diffSpecs(oldText: string, newText: string): DiffSpecsResult {

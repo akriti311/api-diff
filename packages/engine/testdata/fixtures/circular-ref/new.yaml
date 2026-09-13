@@ -1,0 +1,29 @@
+openapi: 3.0.3
+info:
+  title: Graph API
+  version: 1.0.0
+paths:
+  /nodes/{id}:
+    get:
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: A node
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Node"
+components:
+  schemas:
+    Node:
+      type: object
+      properties:
+        id:
+          type: string
+        neighbor:
+          $ref: "#/components/schemas/Node"

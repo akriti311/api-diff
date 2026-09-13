@@ -7,6 +7,50 @@ import { operationPointer } from "../pointer.js";
 
 const COMPARED_IN = new Set(["path", "query", "header"]);
 
+export type ParameterPair = {
+  oldParam: NormalizedParameter;
+  newParam: NormalizedParameter;
+};
+
+export function matchedParameters(
+  oldOperation: NormalizedOperation,
+  newOperation: NormalizedOperation
+): ParameterPair[] {
+  const pairs: ParameterPair[] = [];
+  const consumedOld = new Set<string>();
+  const consumedNew = new Set<string>();
+
+  const pathCount = Math.min(
+    oldOperation.pathParametersByPosition.length,
+    newOperation.pathParametersByPosition.length
+  );
+
+  for (let index = 0; index < pathCount; index += 1) {
+    const oldParam = oldOperation.pathParametersByPosition[index];
+    const newParam = newOperation.pathParametersByPosition[index];
+    if (!oldParam || !newParam) {
+      continue;
+    }
+    consumedOld.add(paramKey(oldParam));
+    consumedNew.add(paramKey(newParam));
+    pairs.push({ oldParam, newParam });
+  }
+
+  for (const [key, oldParam] of oldOperation.parameters) {
+    if (!COMPARED_IN.has(oldParam.in) || consumedOld.has(key)) {
+      continue;
+    }
+    const newParam = newOperation.parameters.get(key);
+    if (!newParam) {
+      continue;
+    }
+    consumedNew.add(key);
+    pairs.push({ oldParam, newParam });
+  }
+
+  return pairs;
+}
+
 export function diffParameters(
   oldOperation: NormalizedOperation,
   newOperation: NormalizedOperation

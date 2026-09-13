@@ -32,7 +32,10 @@ describe("diffOperations", () => {
   });
 
   it("does not report the hero property change as an endpoint change", () => {
-    expect(facts("removed-response-property")).toEqual([]);
+    const changes = facts("removed-response-property");
+    expect(changes.some((change) => change.category === "endpoint")).toBe(false);
+    expect(changes.some((change) => change.category === "method")).toBe(false);
+    expect(changes.some((change) => change.category === "schema")).toBe(true);
   });
 
   it("detects an added endpoint", () => {

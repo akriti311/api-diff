@@ -8,9 +8,9 @@ It analyzes the **API contract only**. It does not read application source code.
 
 ## Current status
 
-**Phase 5 — parameter comparison.**
+**Phase 8 — compatibility rules.**
 
-The engine diffs endpoints/methods and parameters (added, removed, required vs optional). It does not yet classify breaking vs non-breaking, and it does not yet walk request/response schemas.
+`compareSpecs(old, new)` returns a classified report: breaking / non-breaking / warning, each with a `ruleId` and explanation.
 
 ## Workspace
 

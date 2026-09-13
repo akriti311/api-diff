@@ -43,8 +43,8 @@ describe("Phase 1 sample fixtures", () => {
     expect(newSpec).not.toMatch(/name:\s*\n\s*type: string/);
   });
 
-  it("does not implement comparison yet", async () => {
+  it("exports compareSpecs after the rule engine", async () => {
     const engine = await import("../src/index.js");
-    expect("compareSpecs" in engine).toBe(false);
+    expect("compareSpecs" in engine).toBe(true);
   });
 });

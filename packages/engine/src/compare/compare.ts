@@ -1,6 +1,9 @@
 import type { ChangeFact, NormalizedSpec } from "../types.js";
+import { diffOperationSchemas } from "./schemas.js";
 import { diffOperations } from "./operations.js";
 import { diffParameters } from "./parameters.js";
+import { diffRequestBody } from "./requestBody.js";
+import { diffResponses } from "./responses.js";
 
 export function diffContracts(
   oldSpec: NormalizedSpec,
@@ -13,7 +16,12 @@ export function diffContracts(
     if (!newOperation) {
       continue;
     }
-    facts.push(...diffParameters(oldOperation, newOperation));
+    facts.push(
+      ...diffParameters(oldOperation, newOperation),
+      ...diffRequestBody(oldOperation, newOperation),
+      ...diffResponses(oldOperation, newOperation),
+      ...diffOperationSchemas(oldSpec, newSpec, oldOperation, newOperation)
+    );
   }
 
   return facts.sort(compareFacts);
