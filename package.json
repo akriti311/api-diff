@@ -1,0 +1,13 @@
+{
+  "name": "api-diff",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "pnpm --filter @apidiff/engine test",
+    "lint": "pnpm --filter @apidiff/engine lint"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@9.15.0"
+}
