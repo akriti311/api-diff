@@ -5,16 +5,6 @@ import type { ChangeAction, ClassifiedChange, CompareError, Report, Severity } f
 
 type Filter = "all" | "breaking" | "non-breaking" | "warning" | "added" | "removed" | "modified";
 
-const FILTERS: Filter[] = [
-  "all",
-  "breaking",
-  "non-breaking",
-  "warning",
-  "added",
-  "removed",
-  "modified"
-];
-
 const SEVERITY_ORDER: Record<Severity, number> = {
   breaking: 0,
   warning: 1,
@@ -31,6 +21,7 @@ export function App() {
   const [selected, setSelected] = useState<number | null>(null);
   const oldRef = useRef<HTMLTextAreaElement>(null);
   const newRef = useRef<HTMLTextAreaElement>(null);
+  const resultsRef = useRef<HTMLElement>(null);
   const requestId = useRef(0);
   const specsRef = useRef({ oldSpec: "", newSpec: "" });
   specsRef.current = { oldSpec, newSpec };
@@ -61,6 +52,17 @@ export function App() {
         return;
       }
       setReport(result.report);
+      const first = [...result.report.changes].sort(
+        (left, right) => SEVERITY_ORDER[left.severity] - SEVERITY_ORDER[right.severity]
+      )[0];
+      if (first) {
+        setSelected(0);
+        jumpTo(oldRef.current, first.location.path);
+        jumpTo(newRef.current, first.location.path);
+      }
+      window.setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
     } catch {
       if (id !== requestId.current) {
         return;
@@ -96,6 +98,23 @@ export function App() {
     void runCompare(EXAMPLE_OLD, EXAMPLE_NEW);
   }
 
+  function swapSpecs() {
+    setOldSpec(newSpec);
+    setNewSpec(oldSpec);
+    setReport(null);
+    setError(null);
+    setSelected(null);
+  }
+
+  function clearSpecs() {
+    setOldSpec("");
+    setNewSpec("");
+    setReport(null);
+    setError(null);
+    setSelected(null);
+    setFilter("all");
+  }
+
   function onUpload(side: "old" | "new", file: File | undefined) {
     if (!file) {
       return;
@@ -115,33 +134,36 @@ export function App() {
     jumpTo(newRef.current, change.location.path);
   }
 
+  const canCompare = Boolean(oldSpec.trim() && newSpec.trim());
+
   return (
-    <div className="min-h-screen bg-zinc-950 font-sans text-zinc-100">
-      <header className="border-b border-zinc-800">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-6 py-4">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-[0.2em] text-zinc-500">
-              Developer tool
+    <div className="min-h-screen font-sans text-zinc-100">
+      <header className="sticky top-0 z-10 border-b border-white/5 bg-zinc-950/80 backdrop-blur-md">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-4">
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-sky-400/80">
+              Contract compatibility
             </p>
-            <h1 className="text-xl font-semibold">API Diff</h1>
+            <h1 className="text-xl font-semibold tracking-tight">
+              API <span className="text-sky-400">Diff</span>
+            </h1>
             <p className="text-sm text-zinc-400">
-              OpenAPI 3.0 contract compatibility — not a source-code reviewer.
+              Compare two OpenAPI 3.0 specs. Find what may break existing clients.
             </p>
           </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={loadExample}
-              className="border border-zinc-700 px-3 py-2 text-sm text-zinc-200 hover:border-zinc-500"
-            >
+          <div className="flex flex-wrap items-center gap-2">
+            <button type="button" onClick={clearSpecs} className="btn-ghost">
+              Clear
+            </button>
+            <button type="button" onClick={loadExample} className="btn-ghost">
               Load example
             </button>
             <button
               type="button"
               onClick={() => void runCompare(oldSpec, newSpec)}
-              disabled={loading || !oldSpec.trim() || !newSpec.trim()}
+              disabled={loading || !canCompare}
               title="⌘/Ctrl + Enter"
-              className="bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-950 disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-zinc-400"
+              className="btn-primary"
             >
               {loading ? "Comparing…" : "Compare"}
             </button>
@@ -149,18 +171,31 @@ export function App() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl space-y-6 px-6 py-6">
-        <section className="grid gap-4 md:grid-cols-2">
+      <main className="mx-auto max-w-6xl space-y-6 px-5 py-6">
+        <section className="relative grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-stretch">
           <SpecPanel
-            label="Old specification"
+            label="Old spec"
+            hint="What clients already use"
             value={oldSpec}
             onChange={setOldSpec}
             onUpload={(file) => onUpload("old", file)}
             textareaRef={oldRef}
             highlight={typeof error !== "string" && error?.target === "old"}
           />
+          <div className="flex items-center justify-center md:flex-col">
+            <button
+              type="button"
+              onClick={swapSpecs}
+              disabled={!oldSpec && !newSpec}
+              title="Swap old and new"
+              className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs text-zinc-300 hover:border-sky-500/60 hover:text-sky-200 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              ⇄ Swap
+            </button>
+          </div>
           <SpecPanel
-            label="New specification"
+            label="New spec"
+            hint="What you want to ship"
             value={newSpec}
             onChange={setNewSpec}
             onUpload={(file) => onUpload("new", file)}
@@ -171,12 +206,7 @@ export function App() {
 
         {error ? <ErrorBanner error={error} /> : null}
 
-        {!report && !error && !loading ? (
-          <p className="border border-dashed border-zinc-800 px-4 py-8 text-center text-sm text-zinc-500">
-            Paste or upload two OpenAPI 3.0 files, or load the example. Compare with the button or
-            ⌘/Ctrl + Enter.
-          </p>
-        ) : null}
+        {!report && !error && !loading ? <EmptyState onExample={loadExample} /> : null}
 
         {report ? (
           <ReportView
@@ -186,21 +216,56 @@ export function App() {
             filtered={filtered}
             selected={selected}
             onSelect={onSelectChange}
+            resultsRef={resultsRef}
           />
         ) : null}
       </main>
 
-      <footer className="mx-auto max-w-7xl px-6 pb-8 text-xs text-zinc-600">
-        Contract only. OpenAPI 3.0.x. Internal <span className="font-mono">$ref</span> only.
+      <footer className="mx-auto max-w-6xl px-5 pb-10 text-xs leading-5 text-zinc-500">
+        Contract only — OpenAPI 3.0.x, internal <span className="font-mono text-zinc-400">$ref</span>.
         Composed schemas (<span className="font-mono">allOf</span> / <span className="font-mono">oneOf</span> /{" "}
-        <span className="font-mono">anyOf</span>) are flagged, not fully merged.
+        <span className="font-mono">anyOf</span>) are flagged, not fully merged. Shortcut:{" "}
+        <kbd className="rounded border border-zinc-700 bg-zinc-900 px-1.5 py-0.5 font-mono text-[10px] text-zinc-300">
+          ⌘/Ctrl + Enter
+        </kbd>
       </footer>
+    </div>
+  );
+}
+
+function EmptyState(props: { onExample: () => void }) {
+  return (
+    <div className="rounded-2xl border border-dashed border-zinc-700/80 bg-zinc-900/30 px-6 py-10 text-center">
+      <p className="text-sm font-medium text-zinc-200">Paste two specs, or try the example in one click</p>
+      <p className="mx-auto mt-2 max-w-lg text-sm text-zinc-500">
+        The sample removes <span className="font-mono text-zinc-400">name</span> from{" "}
+        <span className="font-mono text-zinc-400">GET /users/{"{id}"}</span> — a breaking response-property
+        change.
+      </p>
+      <ol className="mx-auto mt-6 flex max-w-xl flex-col gap-2 text-left text-sm text-zinc-400 sm:flex-row sm:gap-6 sm:text-center">
+        <li className="flex-1 rounded-xl border border-zinc-800 bg-zinc-950/50 px-4 py-3">
+          <span className="block text-[11px] uppercase tracking-wide text-zinc-500">1</span>
+          Old and new OpenAPI
+        </li>
+        <li className="flex-1 rounded-xl border border-zinc-800 bg-zinc-950/50 px-4 py-3">
+          <span className="block text-[11px] uppercase tracking-wide text-zinc-500">2</span>
+          Compare the contract
+        </li>
+        <li className="flex-1 rounded-xl border border-zinc-800 bg-zinc-950/50 px-4 py-3">
+          <span className="block text-[11px] uppercase tracking-wide text-zinc-500">3</span>
+          Breaking, warning, or safe
+        </li>
+      </ol>
+      <button type="button" onClick={props.onExample} className="btn-primary mt-6">
+        Load example
+      </button>
     </div>
   );
 }
 
 function SpecPanel(props: {
   label: string;
+  hint: string;
   value: string;
   onChange: (value: string) => void;
   onUpload: (file: File | undefined) => void;
@@ -208,11 +273,18 @@ function SpecPanel(props: {
   highlight?: boolean;
 }) {
   return (
-    <div className={`border ${props.highlight ? "border-red-700" : "border-zinc-800"} bg-zinc-900/40`}>
-      <div className="flex items-center justify-between border-b border-zinc-800 px-3 py-2">
-        <h2 className="text-sm font-medium">{props.label}</h2>
-        <label className="cursor-pointer text-xs text-zinc-400 hover:text-zinc-200">
-          Upload YAML/JSON
+    <div
+      className={`overflow-hidden rounded-2xl border bg-zinc-900/60 ${
+        props.highlight ? "border-red-500/70 ring-1 ring-red-500/30" : "border-zinc-800"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-3 border-b border-zinc-800 px-4 py-2.5">
+        <div>
+          <h2 className="text-sm font-medium text-zinc-100">{props.label}</h2>
+          <p className="text-[11px] text-zinc-500">{props.hint}</p>
+        </div>
+        <label className="cursor-pointer rounded-lg border border-zinc-700 px-2.5 py-1 text-[11px] text-zinc-300 hover:border-zinc-500 hover:text-white">
+          Upload
           <input
             type="file"
             accept=".yaml,.yml,.json,application/json,text/yaml"
@@ -230,7 +302,7 @@ function SpecPanel(props: {
         onChange={(event) => props.onChange(event.target.value)}
         spellCheck={false}
         placeholder="Paste OpenAPI 3.0 YAML or JSON"
-        className="h-72 w-full resize-y bg-transparent p-3 font-mono text-xs leading-5 text-zinc-200 outline-none"
+        className="h-80 w-full resize-y bg-transparent p-4 font-mono text-xs leading-5 text-zinc-200 outline-none placeholder:text-zinc-600"
       />
     </div>
   );
@@ -239,7 +311,10 @@ function SpecPanel(props: {
 function ErrorBanner(props: { error: CompareError | string }) {
   if (typeof props.error === "string") {
     return (
-      <div role="alert" className="border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-200">
+      <div
+        role="alert"
+        className="rounded-2xl border border-red-500/40 bg-red-950/40 px-4 py-3 text-sm text-red-100"
+      >
         {props.error}
       </div>
     );
@@ -251,11 +326,14 @@ function ErrorBanner(props: { error: CompareError | string }) {
       : "Invalid request";
 
   return (
-    <div role="alert" className="border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-200">
+    <div
+      role="alert"
+      className="rounded-2xl border border-red-500/40 bg-red-950/40 px-4 py-3 text-sm text-red-100"
+    >
       <p className="font-medium">{title}</p>
-      {props.error.message ? <p>{props.error.message}</p> : null}
+      {props.error.message ? <p className="mt-1 text-red-200/90">{props.error.message}</p> : null}
       {props.error.details?.map((detail) => (
-        <p key={`${detail.pointer ?? ""}-${detail.message}`} className="font-mono text-xs text-red-300">
+        <p key={`${detail.pointer ?? ""}-${detail.message}`} className="mt-1 font-mono text-xs text-red-300">
           {detail.pointer ? `${detail.pointer}: ` : ""}
           {detail.message}
         </p>
@@ -271,11 +349,25 @@ function ReportView(props: {
   filtered: ClassifiedChange[];
   selected: number | null;
   onSelect: (change: ClassifiedChange, index: number) => void;
+  resultsRef: RefObject<HTMLElement>;
 }) {
   const { report } = props;
+  const verdict = verdictFor(report);
 
   return (
-    <section className="space-y-4">
+    <section ref={props.resultsRef} className="space-y-4 scroll-mt-24">
+      <div className={`rounded-2xl border px-5 py-4 ${verdict.className}`}>
+        <p className="text-[11px] font-medium uppercase tracking-[0.18em] opacity-80">{verdict.kicker}</p>
+        <p className="mt-1 text-lg font-semibold tracking-tight">{verdict.title}</p>
+        <p className="mt-1 text-sm opacity-80">
+          {report.meta.oldTitle} {report.meta.oldVersion}
+          <span className="mx-2 opacity-50">→</span>
+          {report.meta.newTitle} {report.meta.newVersion}
+          <span className="mx-2 opacity-40">·</span>
+          {report.meta.durationMs} ms
+        </p>
+      </div>
+
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
         <Stat label="Total" value={report.summary.total} active={props.filter === "all"} onClick={() => props.onFilter("all")} />
         <Stat label="Added" value={report.summary.added} active={props.filter === "added"} onClick={() => props.onFilter("added")} />
@@ -304,42 +396,22 @@ function ReportView(props: {
         />
       </div>
 
-      <p className="text-xs text-zinc-500">
-        {report.meta.oldTitle} {report.meta.oldVersion} → {report.meta.newTitle}{" "}
-        {report.meta.newVersion} · {report.meta.durationMs} ms
-      </p>
-
       {report.meta.notes.length > 0 ? (
-        <ul className="border border-amber-900/60 bg-amber-950/20 px-4 py-3 text-xs text-amber-200">
+        <ul className="rounded-2xl border border-amber-500/30 bg-amber-950/20 px-4 py-3 text-xs text-amber-100">
           {report.meta.notes.map((note) => (
-            <li key={note}>{note}</li>
+            <li key={note} className="leading-5">
+              {note}
+            </li>
           ))}
         </ul>
       ) : null}
 
-      <div className="flex flex-wrap gap-2">
-        {FILTERS.map((item) => (
-          <button
-            key={item}
-            type="button"
-            onClick={() => props.onFilter(item)}
-            className={`px-3 py-1 text-xs uppercase tracking-wide ${
-              props.filter === item
-                ? "bg-zinc-100 text-zinc-950"
-                : "border border-zinc-700 text-zinc-300"
-            }`}
-          >
-            {item} {countForFilter(report, item)}
-          </button>
-        ))}
-      </div>
-
       {report.summary.total === 0 ? (
-        <p className="border border-zinc-800 px-4 py-6 text-sm text-zinc-400">
-          No contract changes detected. The normalized operations and JSON schemas match.
+        <p className="rounded-2xl border border-zinc-800 bg-zinc-900/40 px-4 py-8 text-center text-sm text-zinc-400">
+          No contract changes detected. Normalized operations and JSON schemas match.
         </p>
       ) : props.filtered.length === 0 ? (
-        <p className="border border-zinc-800 px-4 py-6 text-sm text-zinc-400">
+        <p className="rounded-2xl border border-zinc-800 bg-zinc-900/40 px-4 py-8 text-center text-sm text-zinc-400">
           No changes match this filter.
         </p>
       ) : (
@@ -350,27 +422,38 @@ function ReportView(props: {
                 type="button"
                 title={change.location.pointer}
                 onClick={() => props.onSelect(change, index)}
-                className={`w-full border px-4 py-3 text-left ${
-                  props.selected === index ? "border-zinc-400 bg-zinc-900" : "border-zinc-800"
+                className={`w-full rounded-2xl border px-4 py-3.5 text-left transition ${
+                  props.selected === index
+                    ? "border-sky-400/50 bg-zinc-900 shadow-[0_0_0_1px_rgba(56,189,248,0.15)]"
+                    : "border-zinc-800 bg-zinc-900/40 hover:border-zinc-600"
                 }`}
               >
                 <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <span className={`h-2 w-2 rounded-full ${dotFor(change.severity)}`} />
                   <SeverityBadge severity={change.severity} />
                   <ActionBadge action={change.action} />
                   {change.location.method ? (
-                    <span className="font-mono text-zinc-300">{change.location.method}</span>
+                    <span className="rounded bg-zinc-800 px-1.5 py-0.5 font-mono text-zinc-200">
+                      {change.location.method}
+                    </span>
                   ) : null}
                   {change.location.path ? (
                     <span className="font-mono text-zinc-400">{change.location.path}</span>
                   ) : null}
-                  <span className="font-mono text-zinc-600">{change.ruleId}</span>
+                  <span className="ml-auto font-mono text-[11px] text-zinc-600">{change.ruleId}</span>
                 </div>
-                <p className="mt-2 text-sm font-medium">{change.title}</p>
-                <p className="mt-1 text-sm text-zinc-400">{change.explanation}</p>
+                <p className="mt-2.5 text-sm font-medium text-zinc-50">{change.title}</p>
+                <p className="mt-1 text-sm leading-6 text-zinc-400">{change.explanation}</p>
                 {change.oldValue !== undefined || change.newValue !== undefined ? (
-                  <p className="mt-2 font-mono text-xs text-zinc-500">
-                    {formatValue(change.oldValue)} → {formatValue(change.newValue)}
-                  </p>
+                  <div className="mt-3 flex flex-wrap items-center gap-2 font-mono text-xs">
+                    <span className="rounded-md bg-red-950/60 px-2 py-1 text-red-200">
+                      {formatValue(change.oldValue)}
+                    </span>
+                    <span className="text-zinc-600">→</span>
+                    <span className="rounded-md bg-emerald-950/60 px-2 py-1 text-emerald-200">
+                      {formatValue(change.newValue)}
+                    </span>
+                  </div>
                 ) : null}
               </button>
             </li>
@@ -400,10 +483,12 @@ function Stat(props: {
     <button
       type="button"
       onClick={props.onClick}
-      className={`border px-3 py-2 text-left ${props.active ? "border-zinc-400 bg-zinc-900" : "border-zinc-800"}`}
+      className={`rounded-xl border px-3 py-2.5 text-left transition ${
+        props.active ? "border-sky-400/40 bg-zinc-900" : "border-zinc-800 bg-zinc-900/30 hover:border-zinc-600"
+      }`}
     >
       <p className="text-[11px] uppercase tracking-wide text-zinc-500">{props.label}</p>
-      <p className={`text-lg font-medium ${color}`}>{props.value}</p>
+      <p className={`text-lg font-semibold tabular-nums ${color}`}>{props.value}</p>
     </button>
   );
 }
@@ -411,19 +496,52 @@ function Stat(props: {
 function SeverityBadge(props: { severity: Severity }) {
   const className =
     props.severity === "breaking"
-      ? "bg-red-950 text-red-300"
+      ? "bg-red-500/15 text-red-300"
       : props.severity === "warning"
-        ? "bg-amber-950 text-amber-300"
-        : "bg-emerald-950 text-emerald-300";
-  return <span className={`px-1.5 py-0.5 text-[10px] uppercase ${className}`}>{props.severity}</span>;
+        ? "bg-amber-500/15 text-amber-200"
+        : "bg-emerald-500/15 text-emerald-300";
+  return (
+    <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide ${className}`}>
+      {props.severity}
+    </span>
+  );
 }
 
 function ActionBadge(props: { action: ChangeAction }) {
   return (
-    <span className="border border-zinc-700 px-1.5 py-0.5 text-[10px] uppercase text-zinc-400">
+    <span className="rounded border border-zinc-700 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-zinc-400">
       {props.action}
     </span>
   );
+}
+
+function verdictFor(report: Report): { kicker: string; title: string; className: string } {
+  if (report.summary.breaking > 0) {
+    return {
+      kicker: "Breaking",
+      title: `${report.summary.breaking} breaking ${plural(report.summary.breaking, "change")} — existing clients may fail`,
+      className: "border-red-500/35 bg-red-950/35 text-red-50"
+    };
+  }
+  if (report.summary.warnings > 0) {
+    return {
+      kicker: "Needs review",
+      title: `${report.summary.warnings} ${plural(report.summary.warnings, "warning")} — a human should check these`,
+      className: "border-amber-500/35 bg-amber-950/30 text-amber-50"
+    };
+  }
+  if (report.summary.total === 0) {
+    return {
+      kicker: "Compatible",
+      title: "No contract changes detected",
+      className: "border-emerald-500/25 bg-emerald-950/25 text-emerald-50"
+    };
+  }
+  return {
+    kicker: "Compatible",
+    title: "Only non-breaking changes — existing clients should keep working",
+    className: "border-emerald-500/25 bg-emerald-950/25 text-emerald-50"
+  };
 }
 
 function matchesFilter(change: ClassifiedChange, filter: Filter): boolean {
@@ -434,28 +552,6 @@ function matchesFilter(change: ClassifiedChange, filter: Filter): boolean {
     return change.severity === filter;
   }
   return change.action === filter;
-}
-
-function countForFilter(report: Report, filter: Filter): number {
-  if (filter === "all") {
-    return report.summary.total;
-  }
-  if (filter === "breaking") {
-    return report.summary.breaking;
-  }
-  if (filter === "non-breaking") {
-    return report.summary.nonBreaking;
-  }
-  if (filter === "warning") {
-    return report.summary.warnings;
-  }
-  if (filter === "added") {
-    return report.summary.added;
-  }
-  if (filter === "removed") {
-    return report.summary.removed;
-  }
-  return report.summary.modified;
 }
 
 function formatValue(value: unknown): string {
@@ -478,4 +574,18 @@ function jumpTo(textarea: HTMLTextAreaElement | null, path: string | undefined) 
   }
   textarea.focus();
   textarea.setSelectionRange(index, index + path.length);
+}
+
+function dotFor(severity: Severity): string {
+  if (severity === "breaking") {
+    return "bg-red-400";
+  }
+  if (severity === "warning") {
+    return "bg-amber-400";
+  }
+  return "bg-emerald-400";
+}
+
+function plural(count: number, noun: string): string {
+  return count === 1 ? noun : `${noun}s`;
 }
