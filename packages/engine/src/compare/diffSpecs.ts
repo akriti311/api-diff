@@ -1,13 +1,13 @@
 import { parseAndNormalize } from "../normalize/parseAndNormalize.js";
 import type { ChangeFact, ValidationError } from "../types.js";
-import { diffOperations } from "./operations.js";
+import { diffContracts } from "./compare.js";
 
 export type DiffSpecsResult =
   | { ok: true; facts: ChangeFact[]; notes: string[] }
   | { ok: false; error: ValidationError };
 
 /**
- * Parse, validate, normalize, then compare operations.
+ * Parse, validate, normalize, then compare operations and parameters.
  * Does not classify breaking vs non-breaking yet.
  */
 export function diffSpecs(oldText: string, newText: string): DiffSpecsResult {
@@ -23,7 +23,7 @@ export function diffSpecs(oldText: string, newText: string): DiffSpecsResult {
 
   return {
     ok: true,
-    facts: diffOperations(oldResult.spec, newResult.spec),
+    facts: diffContracts(oldResult.spec, newResult.spec),
     notes: [...oldResult.spec.notes, ...newResult.spec.notes]
   };
 }

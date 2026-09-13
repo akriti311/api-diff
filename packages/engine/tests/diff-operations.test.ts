@@ -24,7 +24,11 @@ describe("diffOperations", () => {
   });
 
   it("does not treat a renamed path param as add+remove", () => {
-    expect(facts("renamed-path-param")).toEqual([]);
+    const changes = facts("renamed-path-param");
+    expect(changes.some((change) => change.category === "endpoint")).toBe(false);
+    expect(changes.some((change) => change.category === "method")).toBe(false);
+    expect(changes.some((change) => change.action === "added")).toBe(false);
+    expect(changes.some((change) => change.action === "removed")).toBe(false);
   });
 
   it("does not report the hero property change as an endpoint change", () => {

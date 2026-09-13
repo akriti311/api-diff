@@ -15,6 +15,11 @@ Each folder is one before/after pair:
 | `renamed-path-param` | `/users/{id}` vs `/users/{userId}` — same path signature |
 | `added-method` | `POST` added on an existing `/users/{id}` |
 | `removed-method` | `DELETE` removed from `/users/{id}` |
+| `required-param-added` | required query `status` added |
+| `optional-param-added` | optional query `verbose` added |
+| `optional-to-required` | query `limit` became required |
+| `required-to-optional` | query `limit` became optional |
+| `param-removed` | query `verbose` removed |
 
 `WHAT_CHANGED.md` in each folder is a human note. The engine will not read those files. They exist so you can practice explaining the change before we write comparison code.
 

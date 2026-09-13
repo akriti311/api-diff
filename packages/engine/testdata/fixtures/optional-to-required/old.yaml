@@ -1,0 +1,22 @@
+openapi: 3.0.3
+info:
+  title: Items API
+  version: 1.0.0
+paths:
+  /items:
+    get:
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string

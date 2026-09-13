@@ -1,0 +1,16 @@
+openapi: 3.0.3
+info:
+  title: Items API
+  version: 1.0.0
+paths:
+  /items:
+    get:
+      responses:
+        "200":
+          description: A list of items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string

@@ -8,9 +8,9 @@ It analyzes the **API contract only**. It does not read application source code.
 
 ## Current status
 
-**Phase 4 — endpoint / method comparison.**
+**Phase 5 — parameter comparison.**
 
-The engine can tell which operations were added or removed. It does not yet classify breaking vs non-breaking, and it does not yet compare parameters or schemas.
+The engine diffs endpoints/methods and parameters (added, removed, required vs optional). It does not yet classify breaking vs non-breaking, and it does not yet walk request/response schemas.
 
 ## Workspace
 
