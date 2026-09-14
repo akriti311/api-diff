@@ -7,6 +7,8 @@
     "lint": "pnpm --filter @apidiff/engine lint && pnpm --filter @apidiff/api lint && pnpm --filter @apidiff/web lint && pnpm --filter @apidiff/cli lint",
     "dev:api": "pnpm --filter @apidiff/api dev",
     "dev:web": "pnpm --filter @apidiff/web dev",
+    "build": "pnpm --filter @apidiff/web build",
+    "start": "pnpm --filter @apidiff/api start",
     "compare": "tsx apps/cli/src/cli.ts"
   },
   "engines": {

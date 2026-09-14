@@ -1,6 +1,11 @@
+import { existsSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import cors from "cors";
 import express, { type Express, type Request, type Response } from "express";
 import { compareSpecs } from "@apidiff/engine";
+
+const webDist = join(dirname(fileURLToPath(import.meta.url)), "../../web/dist");
 
 export function createApp(): Express {
   const app = express();
@@ -31,6 +36,10 @@ export function createApp(): Express {
 
     response.json(result.report);
   });
+
+  if (existsSync(webDist)) {
+    app.use(express.static(webDist));
+  }
 
   return app;
 }
