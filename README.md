@@ -8,6 +8,8 @@ It analyzes the **API contract only**. It does not read application source code,
 
 This is a portfolio project: a small, explainable pipeline rather than a wrap of [oasdiff](https://github.com/oasdiff/oasdiff) or similar tools.
 
+**Live demo:** [https://api-diff-81hj.onrender.com](https://api-diff-81hj.onrender.com/) — click **Load example**, then **Compare**. The first visit after idle can take about a minute (Render free tier).
+
 ## Run locally
 
 Node 20+ and [pnpm](https://pnpm.io/) 9.
