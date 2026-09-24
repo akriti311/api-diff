@@ -1,8 +1,9 @@
 import type { ClassifiedChange, Report, ValidationError } from "@apidiff/engine";
 
-export const USAGE = `Usage: apidiff <old-spec> <new-spec>
+export const USAGE = `Usage: apidiff [--json] <old-spec> <new-spec>
 
 Compare two OpenAPI 3.0 YAML or JSON files.
+--json prints the classified report as JSON.
 Exits 1 if any change is breaking, 2 on usage or invalid specs.
 `;
 

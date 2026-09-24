@@ -79,6 +79,22 @@ describe("apidiff CLI", () => {
     expect(result.stderr).toContain("Invalid old spec:");
   });
 
+  it("prints JSON and still exits 1 on a breaking change", () => {
+    const result = run([
+      "--json",
+      fixture("removed-response-property", "old.yaml"),
+      fixture("removed-response-property", "new.yaml")
+    ]);
+
+    expect(result.exitCode).toBe(1);
+    const report = JSON.parse(result.stdout) as {
+      summary: { total: number; breaking: number };
+      changes: Array<{ ruleId: string }>;
+    };
+    expect(report.summary).toMatchObject({ total: 1, breaking: 1 });
+    expect(report.changes[0]?.ruleId).toBe("schema.property.removed.response");
+  });
+
   it("exits 2 when a file is missing", () => {
     const result = run([
       fixture("identical", "old.yaml"),

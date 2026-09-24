@@ -13,7 +13,9 @@ export type RunResult = {
  * 0 = no breaking changes, 1 = breaking, 2 = usage / IO / invalid spec.
  */
 export function run(args: string[]): RunResult {
-  const argv = args[0] === "--" ? args.slice(1) : args;
+  const raw = args[0] === "--" ? args.slice(1) : args;
+  const json = raw.includes("--json");
+  const argv = raw.filter((arg) => arg !== "--json");
 
   if (argv.length === 1 && (argv[0] === "-h" || argv[0] === "--help")) {
     return { exitCode: 0, stdout: USAGE, stderr: "" };
@@ -50,7 +52,9 @@ export function run(args: string[]): RunResult {
 
   return {
     exitCode: compared.report.summary.breaking > 0 ? 1 : 0,
-    stdout: formatReport(compared.report, oldPath, newPath),
+    stdout: json
+      ? `${JSON.stringify(compared.report, null, 2)}\n`
+      : formatReport(compared.report, oldPath, newPath),
     stderr: ""
   };
 }
