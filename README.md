@@ -34,7 +34,7 @@ pnpm compare -- packages/engine/testdata/fixtures/removed-response-property/old.
 pnpm compare -- --json packages/engine/testdata/fixtures/removed-response-property/old.yaml packages/engine/testdata/fixtures/removed-response-property/new.yaml
 ```
 
-Exit codes: `0` no breaking changes, `1` at least one breaking change, `2` usage error, missing file, or invalid spec. `--json` prints the same classified report as JSON.
+Exit codes: `0` no breaking changes, `1` at least one breaking change, `2` usage error, missing file, or invalid spec. `--json` prints the same classified report as JSON. `--fail-on-warning` also exits `1` when the report has warnings.
 
 The HTTP API is `POST http://localhost:3001/api/compare`:
 

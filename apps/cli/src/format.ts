@@ -1,10 +1,11 @@
 import type { ClassifiedChange, Report, ValidationError } from "@apidiff/engine";
 
-export const USAGE = `Usage: apidiff [--json] <old-spec> <new-spec>
+export const USAGE = `Usage: apidiff [--json] [--fail-on-warning] <old-spec> <new-spec>
 
 Compare two OpenAPI 3.0 YAML or JSON files.
 --json prints the classified report as JSON.
-Exits 1 if any change is breaking, 2 on usage or invalid specs.
+--fail-on-warning exits 1 on warnings as well as breaking changes.
+Exits 1 if any change is breaking (or a warning, with --fail-on-warning), 2 on usage or invalid specs.
 `;
 
 export function formatReport(report: Report, oldPath: string, newPath: string): string {

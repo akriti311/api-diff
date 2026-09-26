@@ -95,6 +95,26 @@ describe("apidiff CLI", () => {
     expect(report.changes[0]?.ruleId).toBe("schema.property.removed.response");
   });
 
+  it("exits 0 on a warning unless --fail-on-warning is set", () => {
+    const paths = [
+      fixture("enum-response-added", "old.yaml"),
+      fixture("enum-response-added", "new.yaml")
+    ];
+
+    expect(run(paths).exitCode).toBe(0);
+    expect(run(["--fail-on-warning", ...paths]).exitCode).toBe(1);
+  });
+
+  it("does not fail a non-breaking change with --fail-on-warning", () => {
+    const result = run([
+      "--fail-on-warning",
+      fixture("added-endpoint", "old.yaml"),
+      fixture("added-endpoint", "new.yaml")
+    ]);
+
+    expect(result.exitCode).toBe(0);
+  });
+
   it("exits 2 when a file is missing", () => {
     const result = run([
       fixture("identical", "old.yaml"),

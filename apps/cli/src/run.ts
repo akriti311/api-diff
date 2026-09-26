@@ -8,14 +8,18 @@ export type RunResult = {
   stderr: string;
 };
 
+const FLAGS = new Set(["--json", "--fail-on-warning"]);
+
 /**
  * CLI adapter around compareSpecs(). Does not change engine behavior.
- * 0 = no breaking changes, 1 = breaking, 2 = usage / IO / invalid spec.
+ * 0 = no breaking changes, 1 = breaking (or warning with --fail-on-warning),
+ * 2 = usage / IO / invalid spec.
  */
 export function run(args: string[]): RunResult {
   const raw = args[0] === "--" ? args.slice(1) : args;
   const json = raw.includes("--json");
-  const argv = raw.filter((arg) => arg !== "--json");
+  const failOnWarning = raw.includes("--fail-on-warning");
+  const argv = raw.filter((arg) => !FLAGS.has(arg));
 
   if (argv.length === 1 && (argv[0] === "-h" || argv[0] === "--help")) {
     return { exitCode: 0, stdout: USAGE, stderr: "" };
@@ -50,8 +54,11 @@ export function run(args: string[]): RunResult {
     };
   }
 
+  const { breaking, warnings } = compared.report.summary;
+  const failed = breaking > 0 || (failOnWarning && warnings > 0);
+
   return {
-    exitCode: compared.report.summary.breaking > 0 ? 1 : 0,
+    exitCode: failed ? 1 : 0,
     stdout: json
       ? `${JSON.stringify(compared.report, null, 2)}\n`
       : formatReport(compared.report, oldPath, newPath),
