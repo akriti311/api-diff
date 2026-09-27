@@ -36,6 +36,12 @@ pnpm compare -- --json packages/engine/testdata/fixtures/removed-response-proper
 
 Exit codes: `0` no breaking changes, `1` at least one breaking change, `2` usage error, missing file, or invalid spec. `--json` prints the same classified report as JSON. `--fail-on-warning` also exits `1` when the report has warnings.
 
+CI runs the same CLI on sample fixtures (identical specs must exit `0`; the hero breaking example must exit `1`). In another repo you can gate PRs with:
+
+```bash
+pnpm compare -- old.yaml new.yaml
+```
+
 The HTTP API is `POST http://localhost:3001/api/compare`:
 
 ```json

@@ -21,3 +21,12 @@ jobs:
       - run: pnpm lint
       - run: pnpm test
       - run: pnpm --filter @apidiff/web build
+      - name: CLI smoke (identical specs)
+        run: pnpm compare -- packages/engine/testdata/fixtures/identical/old.yaml packages/engine/testdata/fixtures/identical/new.yaml
+      - name: CLI smoke (breaking change exits 1)
+        run: |
+          set +e
+          pnpm compare -- packages/engine/testdata/fixtures/removed-response-property/old.yaml packages/engine/testdata/fixtures/removed-response-property/new.yaml
+          status=$?
+          set -e
+          test "$status" -eq 1
