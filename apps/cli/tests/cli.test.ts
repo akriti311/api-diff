@@ -79,6 +79,23 @@ describe("apidiff CLI", () => {
     expect(result.stderr).toContain("Invalid old spec:");
   });
 
+  it("prints INVALID_SPEC as JSON with --json", () => {
+    const result = run([
+      "--json",
+      join(fixtures, "invalid/broken.yaml"),
+      fixture("identical", "new.yaml")
+    ]);
+
+    expect(result.exitCode).toBe(2);
+    const body = JSON.parse(result.stderr) as {
+      error: string;
+      target: string;
+      details: Array<{ message: string }>;
+    };
+    expect(body).toMatchObject({ error: "INVALID_SPEC", target: "old" });
+    expect(body.details.length).toBeGreaterThan(0);
+  });
+
   it("prints JSON and still exits 1 on a breaking change", () => {
     const result = run([
       "--json",

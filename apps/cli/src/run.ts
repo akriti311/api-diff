@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { compareSpecs } from "@apidiff/engine";
-import { USAGE, formatReport, formatValidationError } from "./format.js";
+import { USAGE, formatReport, formatValidationError, formatValidationErrorJson } from "./format.js";
 
 export type RunResult = {
   exitCode: number;
@@ -50,7 +50,7 @@ export function run(args: string[]): RunResult {
     return {
       exitCode: 2,
       stdout: "",
-      stderr: formatValidationError(compared.error)
+      stderr: json ? formatValidationErrorJson(compared.error) : formatValidationError(compared.error)
     };
   }
 
