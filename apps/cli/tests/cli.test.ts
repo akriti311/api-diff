@@ -141,4 +141,17 @@ describe("apidiff CLI", () => {
     expect(result.exitCode).toBe(2);
     expect(result.stderr).toContain("Cannot read new spec");
   });
+
+  it("prints IO_ERROR as JSON with --json when a file is missing", () => {
+    const missing = join(fixtures, "does-not-exist.yaml");
+    const result = run(["--json", fixture("identical", "old.yaml"), missing]);
+
+    expect(result.exitCode).toBe(2);
+    const body = JSON.parse(result.stderr) as {
+      error: string;
+      target: string;
+      path: string;
+    };
+    expect(body).toMatchObject({ error: "IO_ERROR", target: "new", path: missing });
+  });
 });

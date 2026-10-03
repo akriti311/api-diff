@@ -3,7 +3,7 @@ import type { ClassifiedChange, Report, ValidationError } from "@apidiff/engine"
 export const USAGE = `Usage: apidiff [--json] [--fail-on-warning] <old-spec> <new-spec>
 
 Compare two OpenAPI 3.0 YAML or JSON files.
---json prints the classified report (or INVALID_SPEC) as JSON.
+--json prints the classified report, INVALID_SPEC, or IO_ERROR as JSON.
 --fail-on-warning exits 1 on warnings as well as breaking changes.
 Exits 1 if any change is breaking (or a warning, with --fail-on-warning), 2 on usage or invalid specs.
 `;
@@ -42,6 +42,14 @@ export function formatValidationError(error: ValidationError): string {
 
 export function formatValidationErrorJson(error: ValidationError): string {
   return `${JSON.stringify(error, null, 2)}\n`;
+}
+
+export function formatIoError(target: "old" | "new", path: string, reason: string): string {
+  return `Cannot read ${target} spec ${path}: ${reason}\n`;
+}
+
+export function formatIoErrorJson(target: "old" | "new", path: string, reason: string): string {
+  return `${JSON.stringify({ error: "IO_ERROR", target, path, message: reason }, null, 2)}\n`;
 }
 
 function formatChange(change: ClassifiedChange): string[] {

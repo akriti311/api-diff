@@ -1,6 +1,13 @@
 import { readFileSync } from "node:fs";
 import { compareSpecs } from "@apidiff/engine";
-import { USAGE, formatReport, formatValidationError, formatValidationErrorJson } from "./format.js";
+import {
+  USAGE,
+  formatIoError,
+  formatIoErrorJson,
+  formatReport,
+  formatValidationError,
+  formatValidationErrorJson
+} from "./format.js";
 
 export type RunResult = {
   exitCode: number;
@@ -35,12 +42,12 @@ export function run(args: string[]): RunResult {
     return { exitCode: 2, stdout: "", stderr: USAGE };
   }
 
-  const oldText = readSpecFile(oldPath, "old");
+  const oldText = readSpecFile(oldPath, "old", json);
   if (!oldText.ok) {
     return oldText.result;
   }
 
-  const newText = readSpecFile(newPath, "new");
+  const newText = readSpecFile(newPath, "new", json);
   if (!newText.ok) {
     return newText.result;
   }
@@ -68,7 +75,8 @@ export function run(args: string[]): RunResult {
 
 function readSpecFile(
   path: string,
-  target: "old" | "new"
+  target: "old" | "new",
+  json: boolean
 ): { ok: true; text: string } | { ok: false; result: RunResult } {
   try {
     return { ok: true, text: readFileSync(path, "utf8") };
@@ -79,7 +87,7 @@ function readSpecFile(
       result: {
         exitCode: 2,
         stdout: "",
-        stderr: `Cannot read ${target} spec ${path}: ${reason}\n`
+        stderr: json ? formatIoErrorJson(target, path, reason) : formatIoError(target, path, reason)
       }
     };
   }
