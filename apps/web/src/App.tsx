@@ -356,16 +356,19 @@ function ReportView(props: {
 
   return (
     <section ref={props.resultsRef} className="space-y-4 scroll-mt-24">
-      <div className={`rounded-2xl border px-5 py-4 ${verdict.className}`}>
-        <p className="text-[11px] font-medium uppercase tracking-[0.18em] opacity-80">{verdict.kicker}</p>
-        <p className="mt-1 text-lg font-semibold tracking-tight">{verdict.title}</p>
-        <p className="mt-1 text-sm opacity-80">
-          {report.meta.oldTitle} {report.meta.oldVersion}
-          <span className="mx-2 opacity-50">→</span>
-          {report.meta.newTitle} {report.meta.newVersion}
-          <span className="mx-2 opacity-40">·</span>
-          {report.meta.durationMs} ms
-        </p>
+      <div className={`flex flex-wrap items-start justify-between gap-3 rounded-2xl border px-5 py-4 ${verdict.className}`}>
+        <div>
+          <p className="text-[11px] font-medium uppercase tracking-[0.18em] opacity-80">{verdict.kicker}</p>
+          <p className="mt-1 text-lg font-semibold tracking-tight">{verdict.title}</p>
+          <p className="mt-1 text-sm opacity-80">
+            {report.meta.oldTitle} {report.meta.oldVersion}
+            <span className="mx-2 opacity-50">→</span>
+            {report.meta.newTitle} {report.meta.newVersion}
+            <span className="mx-2 opacity-40">·</span>
+            {report.meta.durationMs} ms
+          </p>
+        </div>
+        <CopyJsonButton report={report} />
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
@@ -512,6 +515,31 @@ function ActionBadge(props: { action: ChangeAction }) {
     <span className="rounded border border-zinc-700 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-zinc-400">
       {props.action}
     </span>
+  );
+}
+
+function CopyJsonButton(props: { report: Report }) {
+  const [copied, setCopied] = useState(false);
+
+  async function onCopy() {
+    const text = `${JSON.stringify(props.report, null, 2)}\n`;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      return;
+    }
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1500);
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => void onCopy()}
+      className="shrink-0 rounded-lg border border-white/20 bg-black/20 px-3 py-1.5 text-xs font-medium hover:bg-black/30"
+    >
+      {copied ? "Copied" : "Copy JSON"}
+    </button>
   );
 }
 
