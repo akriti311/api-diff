@@ -368,7 +368,10 @@ function ReportView(props: {
             {report.meta.durationMs} ms
           </p>
         </div>
-        <CopyJsonButton report={report} />
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <CopyJsonButton report={report} />
+          <DownloadJsonButton report={report} />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
@@ -518,13 +521,16 @@ function ActionBadge(props: { action: ChangeAction }) {
   );
 }
 
+function reportJson(report: Report): string {
+  return `${JSON.stringify(report, null, 2)}\n`;
+}
+
 function CopyJsonButton(props: { report: Report }) {
   const [copied, setCopied] = useState(false);
 
   async function onCopy() {
-    const text = `${JSON.stringify(props.report, null, 2)}\n`;
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(reportJson(props.report));
     } catch {
       return;
     }
@@ -533,15 +539,32 @@ function CopyJsonButton(props: { report: Report }) {
   }
 
   return (
-    <button
-      type="button"
-      onClick={() => void onCopy()}
-      className="shrink-0 rounded-lg border border-white/20 bg-black/20 px-3 py-1.5 text-xs font-medium hover:bg-black/30"
-    >
+    <button type="button" onClick={() => void onCopy()} className={JSON_ACTION_CLASS}>
       {copied ? "Copied" : "Copy JSON"}
     </button>
   );
 }
+
+function DownloadJsonButton(props: { report: Report }) {
+  function onDownload() {
+    const blob = new Blob([reportJson(props.report)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "apidiff-report.json";
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  return (
+    <button type="button" onClick={onDownload} className={JSON_ACTION_CLASS}>
+      Download JSON
+    </button>
+  );
+}
+
+const JSON_ACTION_CLASS =
+  "shrink-0 rounded-lg border border-white/20 bg-black/20 px-3 py-1.5 text-xs font-medium hover:bg-black/30";
 
 function verdictFor(report: Report): { kicker: string; title: string; className: string } {
   if (report.summary.breaking > 0) {
