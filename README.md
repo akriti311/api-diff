@@ -34,7 +34,7 @@ pnpm compare -- packages/engine/testdata/fixtures/removed-response-property/old.
 pnpm compare -- --json packages/engine/testdata/fixtures/removed-response-property/old.yaml packages/engine/testdata/fixtures/removed-response-property/new.yaml
 ```
 
-Exit codes: `0` no breaking changes, `1` at least one breaking change, `2` usage error, missing file, or invalid spec. `--json` prints the classified report as JSON, and prints `INVALID_SPEC` or `IO_ERROR` as JSON on stderr. `--fail-on-warning` also exits `1` when the report has warnings.
+Exit codes: `0` no breaking changes, `1` at least one breaking change, `2` usage error, missing file, or invalid spec. `--json` prints the classified report as JSON, and prints `INVALID_SPEC` or `IO_ERROR` as JSON on stderr. `--fail-on-warning` also exits `1` when the report has warnings. `--version` / `-v` prints the CLI version.
 
 CI runs the same CLI on sample fixtures (identical specs must exit `0`; the hero breaking example must exit `1`). In another repo you can gate PRs with:
 

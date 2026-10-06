@@ -2,7 +2,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { USAGE } from "../src/format.js";
-import { run } from "../src/run.js";
+import { CLI_VERSION, run } from "../src/run.js";
 
 const fixtures = join(
   dirname(fileURLToPath(import.meta.url)),
@@ -24,6 +24,16 @@ describe("apidiff CLI", () => {
     const result = run(["--help"]);
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toBe(USAGE);
+  });
+
+  it("prints the package version", () => {
+    expect(run(["--version"])).toEqual({
+      exitCode: 0,
+      stdout: `${CLI_VERSION}\n`,
+      stderr: ""
+    });
+    expect(run(["-v"]).stdout).toBe(`${CLI_VERSION}\n`);
+    expect(CLI_VERSION).toMatch(/^\d+\.\d+\.\d+$/);
   });
 
   it("strips a leading -- so pnpm can forward paths", () => {

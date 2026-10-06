@@ -1,4 +1,6 @@
 import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { compareSpecs } from "@apidiff/engine";
 import {
   USAGE,
@@ -17,6 +19,12 @@ export type RunResult = {
 
 const FLAGS = new Set(["--json", "--fail-on-warning"]);
 
+export const CLI_VERSION = (
+  JSON.parse(
+    readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../package.json"), "utf8")
+  ) as { version: string }
+).version;
+
 /**
  * CLI adapter around compareSpecs(). Does not change engine behavior.
  * 0 = no breaking changes, 1 = breaking (or warning with --fail-on-warning),
@@ -27,6 +35,10 @@ export function run(args: string[]): RunResult {
   const json = raw.includes("--json");
   const failOnWarning = raw.includes("--fail-on-warning");
   const argv = raw.filter((arg) => !FLAGS.has(arg));
+
+  if (argv.includes("--version") || argv.includes("-v")) {
+    return { exitCode: 0, stdout: `${CLI_VERSION}\n`, stderr: "" };
+  }
 
   if (argv.length === 1 && (argv[0] === "-h" || argv[0] === "--help")) {
     return { exitCode: 0, stdout: USAGE, stderr: "" };
