@@ -59,6 +59,17 @@ describe("apidiff CLI", () => {
     expect(result.stdout).toContain("GET /users/{id}");
   });
 
+  it("prints only the summary with --quiet", () => {
+    const result = run([
+      "--quiet",
+      fixture("removed-response-property", "old.yaml"),
+      fixture("removed-response-property", "new.yaml")
+    ]);
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout).toBe("1 change: 1 breaking, 0 non-breaking, 0 warnings\n");
+  });
+
   it("exits 0 when the specs are identical", () => {
     const result = run([
       fixture("identical", "old.yaml"),

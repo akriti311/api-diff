@@ -1,10 +1,11 @@
 import type { ClassifiedChange, Report, ValidationError } from "@apidiff/engine";
 
-export const USAGE = `Usage: apidiff [--json] [--fail-on-warning] <old-spec> <new-spec>
+export const USAGE = `Usage: apidiff [--json] [--quiet] [--fail-on-warning] <old-spec> <new-spec>
        apidiff --version
 
 Compare two OpenAPI 3.0 YAML or JSON files.
 --json prints the classified report, INVALID_SPEC, or IO_ERROR as JSON.
+--quiet prints only the summary line.
 --fail-on-warning exits 1 on warnings as well as breaking changes.
 --version prints the CLI version.
 Exits 1 if any change is breaking (or a warning, with --fail-on-warning), 2 on usage or invalid specs.
@@ -23,9 +24,7 @@ export function formatReport(report: Report, oldPath: string, newPath: string): 
     return `${lines.join("\n")}\n`;
   }
 
-  lines.push(
-    `${summary.total} ${plural(summary.total, "change")}: ${summary.breaking} breaking, ${summary.nonBreaking} non-breaking, ${summary.warnings} ${plural(summary.warnings, "warning")}`
-  );
+  lines.push(summaryLine(summary));
   lines.push("");
 
   for (const change of report.changes) {
@@ -33,6 +32,13 @@ export function formatReport(report: Report, oldPath: string, newPath: string): 
   }
 
   return `${lines.join("\n")}\n`;
+}
+
+export function formatQuietReport(report: Report): string {
+  if (report.summary.total === 0) {
+    return "No contract changes.\n";
+  }
+  return `${summaryLine(report.summary)}\n`;
 }
 
 export function formatValidationError(error: ValidationError): string {
@@ -63,6 +69,10 @@ function formatChange(change: ClassifiedChange): string[] {
   lines.push(`  ${change.title}`);
   lines.push(`  ${change.explanation}`);
   return lines;
+}
+
+function summaryLine(summary: Report["summary"]): string {
+  return `${summary.total} ${plural(summary.total, "change")}: ${summary.breaking} breaking, ${summary.nonBreaking} non-breaking, ${summary.warnings} ${plural(summary.warnings, "warning")}`;
 }
 
 function plural(count: number, noun: string): string {

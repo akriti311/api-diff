@@ -6,6 +6,7 @@ import {
   USAGE,
   formatIoError,
   formatIoErrorJson,
+  formatQuietReport,
   formatReport,
   formatValidationError,
   formatValidationErrorJson
@@ -17,7 +18,7 @@ export type RunResult = {
   stderr: string;
 };
 
-const FLAGS = new Set(["--json", "--fail-on-warning"]);
+const FLAGS = new Set(["--json", "--quiet", "--fail-on-warning"]);
 
 export const CLI_VERSION = (
   JSON.parse(
@@ -33,6 +34,7 @@ export const CLI_VERSION = (
 export function run(args: string[]): RunResult {
   const raw = args[0] === "--" ? args.slice(1) : args;
   const json = raw.includes("--json");
+  const quiet = raw.includes("--quiet");
   const failOnWarning = raw.includes("--fail-on-warning");
   const argv = raw.filter((arg) => !FLAGS.has(arg));
 
@@ -80,7 +82,9 @@ export function run(args: string[]): RunResult {
     exitCode: failed ? 1 : 0,
     stdout: json
       ? `${JSON.stringify(compared.report, null, 2)}\n`
-      : formatReport(compared.report, oldPath, newPath),
+      : quiet
+        ? formatQuietReport(compared.report)
+        : formatReport(compared.report, oldPath, newPath),
     stderr: ""
   };
 }
