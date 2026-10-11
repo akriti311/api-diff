@@ -281,7 +281,11 @@ function SpecPanel(props: {
       <div className="flex items-center justify-between gap-3 border-b border-zinc-800 px-4 py-2.5">
         <div>
           <h2 className="text-sm font-medium text-zinc-100">{props.label}</h2>
-          <p className="text-[11px] text-zinc-500">{props.hint}</p>
+          <p className="text-[11px] text-zinc-500">
+            {props.hint}
+            <span className="mx-1.5 text-zinc-700">·</span>
+            {specStats(props.value)}
+          </p>
         </div>
         <label className="cursor-pointer rounded-lg border border-zinc-700 px-2.5 py-1 text-[11px] text-zinc-300 hover:border-zinc-500 hover:text-white">
           Upload
@@ -603,6 +607,16 @@ function matchesFilter(change: ClassifiedChange, filter: Filter): boolean {
     return change.severity === filter;
   }
   return change.action === filter;
+}
+
+function specStats(value: string): string {
+  if (!value.trim()) {
+    return "empty";
+  }
+  const lines = value.split("\n").length;
+  const trimmed = value.trimStart();
+  const format = trimmed.startsWith("{") || trimmed.startsWith("[") ? "JSON" : "YAML";
+  return `${format} · ${lines} ${lines === 1 ? "line" : "lines"}`;
 }
 
 function formatValue(value: unknown): string {
