@@ -1,3 +1,5 @@
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -68,6 +70,37 @@ describe("apidiff CLI", () => {
 
     expect(result.exitCode).toBe(1);
     expect(result.stdout).toBe("1 change: 1 breaking, 0 non-breaking, 0 warnings\n");
+  });
+
+  it("writes the JSON report with --output", () => {
+    const dir = mkdtempSync(join(tmpdir(), "apidiff-"));
+    const out = join(dir, "report.json");
+    try {
+      const result = run([
+        "--quiet",
+        "--output",
+        out,
+        fixture("removed-response-property", "old.yaml"),
+        fixture("removed-response-property", "new.yaml")
+      ]);
+
+      expect(result.exitCode).toBe(1);
+      expect(result.stdout).toBe("1 change: 1 breaking, 0 non-breaking, 0 warnings\n");
+      const report = JSON.parse(readFileSync(out, "utf8")) as {
+        summary: { breaking: number };
+        changes: Array<{ ruleId: string }>;
+      };
+      expect(report.summary.breaking).toBe(1);
+      expect(report.changes[0]?.ruleId).toBe("schema.property.removed.response");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("exits 2 when --output has no path", () => {
+    const result = run(["--output"]);
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr).toBe(USAGE);
   });
 
   it("exits 0 when the specs are identical", () => {

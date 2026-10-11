@@ -1,11 +1,12 @@
 import type { ClassifiedChange, Report, ValidationError } from "@apidiff/engine";
 
-export const USAGE = `Usage: apidiff [--json] [--quiet] [--fail-on-warning] <old-spec> <new-spec>
+export const USAGE = `Usage: apidiff [--json] [--quiet] [--fail-on-warning] [--output <file>] <old-spec> <new-spec>
        apidiff --version
 
 Compare two OpenAPI 3.0 YAML or JSON files.
 --json prints the classified report, INVALID_SPEC, or IO_ERROR as JSON.
 --quiet prints only the summary line.
+--output <file> writes the classified report JSON to a file.
 --fail-on-warning exits 1 on warnings as well as breaking changes.
 --version prints the CLI version.
 Exits 1 if any change is breaking (or a warning, with --fail-on-warning), 2 on usage or invalid specs.

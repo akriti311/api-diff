@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { compareSpecs } from "@apidiff/engine";
@@ -33,10 +33,15 @@ export const CLI_VERSION = (
  */
 export function run(args: string[]): RunResult {
   const raw = args[0] === "--" ? args.slice(1) : args;
-  const json = raw.includes("--json");
-  const quiet = raw.includes("--quiet");
-  const failOnWarning = raw.includes("--fail-on-warning");
-  const argv = raw.filter((arg) => !FLAGS.has(arg));
+  const output = takeOption(raw, "--output");
+  if (output.missing) {
+    return { exitCode: 2, stdout: "", stderr: USAGE };
+  }
+
+  const json = output.rest.includes("--json");
+  const quiet = output.rest.includes("--quiet");
+  const failOnWarning = output.rest.includes("--fail-on-warning");
+  const argv = output.rest.filter((arg) => !FLAGS.has(arg));
 
   if (argv.includes("--version") || argv.includes("-v")) {
     return { exitCode: 0, stdout: `${CLI_VERSION}\n`, stderr: "" };
@@ -77,16 +82,60 @@ export function run(args: string[]): RunResult {
 
   const { breaking, warnings } = compared.report.summary;
   const failed = breaking > 0 || (failOnWarning && warnings > 0);
+  const reportJson = `${JSON.stringify(compared.report, null, 2)}\n`;
+
+  if (output.value) {
+    try {
+      writeFileSync(output.value, reportJson, "utf8");
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      return {
+        exitCode: 2,
+        stdout: "",
+        stderr: `Cannot write report ${output.value}: ${reason}\n`
+      };
+    }
+  }
 
   return {
     exitCode: failed ? 1 : 0,
     stdout: json
-      ? `${JSON.stringify(compared.report, null, 2)}\n`
+      ? reportJson
       : quiet
         ? formatQuietReport(compared.report)
         : formatReport(compared.report, oldPath, newPath),
     stderr: ""
   };
+}
+
+function takeOption(
+  args: string[],
+  name: string
+): { value: string | undefined; rest: string[]; missing: boolean } {
+  const rest: string[] = [];
+  let value: string | undefined;
+  let missing = false;
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg !== name) {
+      if (arg) {
+        rest.push(arg);
+      }
+      continue;
+    }
+
+    const next = args[index + 1];
+    if (!next || next.startsWith("-")) {
+      missing = true;
+      continue;
+    }
+
+    value = next;
+    index += 1;
+  }
+
+  return { value, rest, missing };
 }
 
 function readSpecFile(
